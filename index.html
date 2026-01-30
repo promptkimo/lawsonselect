@@ -261,8 +261,8 @@
 <script>
     // ================= 設定區 =================
     const LIFF_ID = "2009014517-qshUmlAc"; 
-    // 您確認有效的 GAS 網址 (TPA 結尾)
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzr3WEQe8DB5aBaYtZ9mJcoaG7_OOxFQtpEaW4dJHiI_foNME7cEWIwp6f4it8cZABTPA/exec"; 
+    // ★ 這是您指定的正確網址 (guX 結尾) ★
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz4CZDlHRT0He0LtaJJFLrS2ASZyEqsDeALFJNvo8VPZ1Qm3_MSbFPEDu1RNtda3guX/exec"; 
     // =========================================
 
     let products = [];
@@ -315,7 +315,7 @@
         await fetchProducts();
     }
 
-    // --- 下載商品資料 (已優化邏輯) ---
+    // --- 偵探版 fetchProducts (確保資料正確下載) ---
     async function fetchProducts() {
         document.getElementById('loading-overlay').classList.remove('hidden');
         document.getElementById('loading-text').innerText = "下載最新菜單...";
@@ -328,30 +328,32 @@
             });
             
             const text = await res.text();
+            
             let data;
             try {
                 data = JSON.parse(text);
             } catch(e) {
-                // alert("後台格式異常:\n" + text.substring(0, 100)); // 偵錯用
-                throw new Error("格式錯誤");
+                // 如果後端回傳的不是 JSON (例如錯誤頁面)，這裡會跳出警告
+                alert("❌ 連線異常！後台回傳內容不是 JSON。\n內容預覽：\n" + text.substring(0, 300));
+                document.getElementById('loading-overlay').classList.add('hidden');
+                return;
             }
 
             if (data.status === 'success') {
                 if (data.products && Array.isArray(data.products)) {
-                    
+                    // 成功讀取
                     products = data.products.map((p, index) => ({ ...p, originalIndex: index }));
                     
-                    // 防呆：如果 cat 是空的，補上 "其他"
+                    // 防呆：排除空分類，若分類為空則補上 "未分類"
                     products.forEach(p => { if(!p.cat) p.cat = "未分類"; });
 
                     // 取得分類 (排除空分類)
-                    categories = [...new Set(products.map(p => p.cat))];
+                    categories = [...new Set(products.map(p => p.cat))].filter(c => c);
                     
-                    // ★ 強制渲染 ★
                     renderFrontUI();
                 } else {
-                    // 如果 products 是空的，但連線成功，可能是沒資料
-                    console.warn("No products found in response");
+                    // 如果後端回傳 success 但沒有 products，代表 GAS 程式碼還是舊的
+                    alert("⚠️ 偵測到版本異常！\n您的 GAS 後端程式碼似乎沒有更新 (找不到 products 欄位)。\n請務必去 GAS 按「部署」->「建立新版本」。");
                 }
                 document.getElementById('loading-overlay').classList.add('hidden');
             } else {
@@ -380,10 +382,8 @@
             c.appendChild(d);
         });
         
-        // ★ 自動點擊第一個分類，確保商品出現 ★
-        if(categories.length > 0) {
-            filterCategory(categories[0], null);
-        }
+        // 預設顯示第一個分類
+        filterCategory(categories[0], null);
     }
 
     function filterCategory(cat, btn) {
