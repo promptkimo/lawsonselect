@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lawson Shop 點餐</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    
+    <style>
+        :root { --primary-color: #0d6efd; }
+        body { background-color: #f8f9fa; font-family: -apple-system, sans-serif; padding-bottom: 80px; }
+        .header-bar { background-color: #fff; padding: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .user-info { display: flex; align-items: center; font-size: 0.9rem; color: #555; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; background-color: #eee; object-fit: cover;}
+        .product-card { background: white; border-radius: 12px; padding: 12px; display: flex; align-items: center; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #eee; }
+        .product-thumb { width: 70px; height: 70px; background-color: #f1f3f5; border-radius: 8px; margin-right: 15px; background-size: cover; background-position: center; flex-shrink: 0; }
+        .product-info { flex: 1; }
+        .price-tag { color: #dc3545; font-weight: bold; font-size: 1.1rem; }
+        .btn-add { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: transform 0.1s; }
+        .btn-add:active { transform: scale(0.9); }
+        .cart-fab { position: fixed; bottom: 25px; right: 25px; width: 64px; height: 64px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4); z-index: 1000; cursor: pointer; border: 2px solid white; transition: transform 0.2s; }
+        .cart-badge { position: absolute; top: 0; right: 0; background: #dc3545; color: white; border-radius: 50%; padding: 4px 8px; font-size: 0.75rem; border: 2px solid white; font-weight: bold; }
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.3s; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="loading-overlay">
+    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+    <div id="loading-text" class="text-secondary fw-bold">系統連線中...</div>
+</div>
+
+<div class="header-bar d-flex justify-content-between align-items-center">
+    <h5 class="m-0 fw-bold">Lawson Shop</h5>
+    <div id="user-bar" class="user-info hidden">
+        <img id="u-img" class="user-avatar" src="">
+        <span id="u-name">訪客</span>
+    </div>
+</div>
+
+<div class="container mt-3">
+    <div id="product-list"></div>
+</div>
+
+<div class="cart-fab" onclick="openCartModal()">
+    <i class="bi bi-cart-fill"></i>
+    <span id="cart-count" class="cart-badge hidden">0</span>
+</div>
+
+<div class="modal fade" id="cartModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold">您的購物車</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="cart-items"></div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="h5 m-0 text-muted">總計金額</span>
+                    <span class="h3 m-0 text-danger fw-bold" id="cart-total">$0</span>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-primary w-100 fw-bold py-2 fs-5" onclick="submitOrder()">
+                    <i class="bi bi-send-check me-2"></i> 確認送出
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ================= 設定區 =================
+    const LIFF_ID = "2009014517-qshUmlAc"; 
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzr3WEQe8DB5aBaYtZ9mJcoaG7_OOxFQtpEaW4dJHiI_foNME7cEWIwp6f4it8cZABTPA/exec"; 
+    // =========================================
+
+    let lineProfile = null;
+    let products = [
+        { id: 1, name: "招牌原味鬆餅", price: 50, img: "" },
+        { id: 2, name: "黑糖珍珠鮮奶", price: 65, img: "" },
+        { id: 3, name: "特製牛肉麵", price: 150, img: "" },
+        { id: 4, name: "炸雞排", price: 80, img: "" }
+    ];
+    let cart = [];
+
+    window.onload = async () => {
+        renderProducts();
+        await initLIFF();
+    };
+
+    async function initLIFF() {
+        try {
+            await liff.init({ liffId: LIFF_ID });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                lineProfile = await liff.getProfile();
+                updateUserUI(lineProfile);
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        } catch (err) {
+            document.getElementById('loading-text').innerText = "連線失敗，請檢查設定";
+            console.error(err);
+        }
+    }
+
+    function updateUserUI(profile) {
+        document.getElementById('user-bar').classList.remove('hidden');
+        document.getElementById('u-name').innerText = profile.displayName;
+        if (profile.pictureUrl) {
+            document.getElementById('u-img').src = profile.pictureUrl;
+        } else {
+            document.getElementById('u-img').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='12' r='12'/%3E%3C/svg%3E";
+        }
+    }
+
+    function renderProducts() {
+        const list = document.getElementById('product-list');
+        list.innerHTML = products.map(p => `
+            <div class="product-card">
+                <div class="product-thumb" style="background-image:url('${p.img}')"></div>
+                <div class="product-info">
+                    <div class="fw-bold fs-5">${p.name}</div>
+                    <div class="price-tag">$${p.price}</div>
+                </div>
+                <button class="btn-add" onclick="addToCart(${p.id})">
+                    <i class="bi bi-plus"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    function addToCart(id) {
+        const p = products.find(x => x.id === id);
+        const item = cart.find(x => x.id === id);
+        if(item) {
+            item.count++;
+        } else {
+            cart.push({...p, count: 1});
+        }
+        updateCartFab();
+        if(navigator.vibrate) navigator.vibrate(30);
+    }
+
+    function updateCartFab() {
+        const totalCount = cart.reduce((sum, item) => sum + item.count, 0);
+        const badge = document.getElementById('cart-count');
+        badge.innerText = totalCount;
+        if(totalCount > 0) {
+            badge.classList.remove('hidden');
+            const fab = document.querySelector('.cart-fab');
+            fab.style.transform = "scale(1.1)";
+            setTimeout(() => fab.style.transform = "scale(1)", 200);
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    function openCartModal() {
+        renderCartItems();
+        new bootstrap.Modal(document.getElementById('cartModal')).show();
+    }
+
+    function renderCartItems() {
+        const container = document.getElementById('cart-items');
+        let total = 0;
+        
+        if(cart.length === 0) {
+            container.innerHTML = `<div class="text-center text-muted py-4"><i class="bi bi-cart3 fs-1 d-block mb-2"></i>購物車空空的</div>`;
+            document.getElementById('cart-total').innerText = "$0";
+            return;
+        }
+
+        container.innerHTML = cart.map((item, index) => {
+            const subtotal = item.price * item.count;
+            total += subtotal;
+            return `
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+                <div>
+                    <div class="fw-bold">${item.name}</div>
+                    <div class="text-muted small">$${item.price} x ${item.count}</div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="fw-bold text-dark me-3">$${subtotal}</span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>`;
+        }).join('');
+        
+        document.getElementById('cart-total').innerText = "$" + total;
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        renderCartItems();
+        updateCartFab();
+    }
+
+    function submitOrder() {
+        if(cart.length === 0) return alert("請先選購商品！");
+        if(!lineProfile) return alert("會員資料讀取中，請稍後...");
+
+        document.getElementById('loading-text').innerText = "訂單傳送中...";
+        document.getElementById('loading-overlay').classList.remove('hidden');
+        
+        bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+
+        const orderData = {
+            userId: lineProfile.userId,
+            displayName: lineProfile.displayName,
+            cart: cart,
+            total: cart.reduce((sum, item) => sum + (item.price * item.count), 0)
+        };
+
+        // 使用 fetch 發送資料到 GAS 的 doPost
+        // 使用 text/plain 避免 CORS 預檢請求，這是讓跨域成功的關鍵
+        fetch(GAS_API_URL, {
+            method: "POST",
+            body: JSON.stringify(orderData),
+            headers: { "Content-Type": "text/plain;charset=utf-8" }
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            if(data.status === 'success') {
+                alert("✅ 訂單已送出！\n\n您的官方帳號 (@lawsonshop) 已傳送訂單確認通知給您。");
+                cart = [];
+                updateCartFab();
+                liff.closeWindow(); 
+            } else {
+                alert("❌ 發生錯誤: " + data.message);
+            }
+        })
+        .catch(err => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            alert("⚠️ 連線失敗: " + err);
+        });
+    }
+</script>
+</body>
+</html>
