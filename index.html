@@ -190,11 +190,10 @@
 
 <script>
     // ================= 設定區 =================
-    // LIFF ID
     const LIFF_ID = "2009014517-qshUmlAc"; 
     
-    // GAS Web App URL (使用您最新提供的 TPA 結尾網址)
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzr3WEQe8DB5aBaYtZ9mJcoaG7_OOxFQtpEaW4dJHiI_foNME7cEWIwp6f4it8cZABTPA/exec"; 
+    // ★ 已經切換回您最初提供的那個網址 (以 guX 結尾) ★
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz4CZDlHRT0He0LtaJJFLrS2ASZyEqsDeALFJNvo8VPZ1Qm3_MSbFPEDu1RNtda3guX/exec"; 
     // =========================================
 
     let products = [];
@@ -208,15 +207,11 @@
         document.getElementById('loading-overlay').classList.remove('hidden');
 
         try {
-            // 1. 初始化 LIFF
             await liff.init({ liffId: LIFF_ID });
-            
-            // 2. 判斷是否登入
             if (liff.isLoggedIn()) {
                 const profile = await liff.getProfile();
                 await loginSuccess(profile.userId, profile.displayName, profile.pictureUrl, "line");
             } else {
-                // 未登入，隱藏 Loading，顯示登入畫面
                 document.getElementById('loading-overlay').classList.add('hidden');
                 document.getElementById('login-screen').style.display = 'flex';
             }
@@ -246,11 +241,9 @@
         document.getElementById('u-name').innerText = name;
         document.getElementById('u-img').src = pic || "https://via.placeholder.com/32/ccc/fff?text=" + name.charAt(0);
         
-        // 隱藏登入畫面
         document.getElementById('login-screen').style.opacity = '0';
         setTimeout(() => { document.getElementById('login-screen').style.display = 'none'; }, 500);
 
-        // ★ 關鍵：登入後立刻去 GAS 下載最新商品資料
         await fetchProducts();
     }
 
@@ -370,7 +363,6 @@
         let disabledClass = '';
         let clickEvent = `onclick="event.stopPropagation();addToCart(${p.originalIndex})"`;
 
-        // 庫存判斷
         if (p.status === 'oos' || p.status === 'discontinued' || (p.stock !== "" && parseInt(p.stock) <= 0)) {
             stockBadge = `<span class="stock-badge stock-out">缺貨</span>`;
             disabledClass = 'disabled';
@@ -414,7 +406,6 @@
         const p = products[index];
         const ex = cart.find(x => x.name === p.name);
         if (ex) {
-            // 庫存檢查
             if(p.stock !== "" && parseInt(p.stock) > 0 && ex.count >= parseInt(p.stock)) return alert("庫存不足");
             ex.count++;
         } else {
@@ -422,7 +413,6 @@
         }
         updateCartFab();
         
-        // 更新當前畫面的 badge
         const k = document.getElementById('front-search-input').value;
         if(k) handleFrontSearch();
         else {
@@ -518,7 +508,7 @@
                 updateCartFab();
                 const activeBtn = document.querySelector('.category-btn.active');
                 if(activeBtn) filterCategory(activeBtn.innerText, null);
-                openHistoryModal(); // 自動打開歷史訂單確認
+                openHistoryModal();
             } else {
                 alert("❌ 錯誤: " + data.message);
             }
