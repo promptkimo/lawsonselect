@@ -1,254 +1,415 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lawson Shop</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#f8f9fa">
+
+    <title>Lawson Shop 點餐系統</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
     
     <style>
-        :root { --primary-color: #0d6efd; --status-ready: #198754; --status-wait: #ffc107; }
-        body { background-color: #f8f9fa; font-family: -apple-system, sans-serif; padding-bottom: 90px; }
-        
-        .header-bar { background-color: white; padding: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .user-avatar { width: 32px; height: 32px; border-radius: 50%; margin-right: 8px; object-fit: cover; background: #eee; }
-        
-        /* 商品卡片 */
-        .product-card { background: white; border-radius: 12px; padding: 12px; display: flex; align-items: center; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; }
-        .product-thumb { width: 70px; height: 70px; background-color: #f8f9fa; border-radius: 8px; margin-right: 15px; background-size: cover; background-position: center; flex-shrink: 0; }
-        .btn-add { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; }
-        
-        /* 底部導航 */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 10px 0; z-index: 900; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-item { text-align: center; color: #999; font-size: 0.8rem; text-decoration: none; cursor: pointer; flex: 1; }
-        .nav-item.active { color: var(--primary-color); font-weight: bold; }
-        .nav-icon { font-size: 1.4rem; display: block; margin-bottom: 2px; }
-        
-        /* 訂單歷史卡片 */
-        .order-history-card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 5px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .status-badge { font-size: 0.8rem; padding: 4px 8px; border-radius: 20px; color: white; background: #6c757d; float: right; }
-        .status-preparing { background: #ffc107; color: #000; border-left-color: #ffc107; } /* 準備中 */
-        .status-done { background: #198754; border-left-color: #198754; } /* 完成 */
+        :root {
+            --primary-color: #0d6efd; --secondary-color: #6c757d; --success-color: #198754;
+            --danger-color: #dc3545; --warning-color: #ffc107; --info-color: #0dcaf0;
+            --light-bg: #f8f9fa; --card-bg: #ffffff; --border-color: #dee2e6; --text-dark: #212529;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05); --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-        /* 歡迎/登入畫面 */
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.3s; }
+        html { height: 100%; overflow: hidden; overscroll-behavior: none; }
+        body { 
+            background-color: var(--light-bg); color: var(--text-dark);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            width: 100%; height: 100%; margin: 0; padding: 0;
+            padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+            overflow: hidden; -webkit-user-select: none; user-select: none; position: fixed;
+        }
+
+        #app-scroll-container {
+            width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden;
+            padding-bottom: 120px; -webkit-overflow-scrolling: touch;
+        }
+
+        /* 登入畫面樣式 */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #212529; z-index: 99999; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; color: white; transition: opacity 0.5s;
+        }
+
+        .header-section {
+            background: white; padding: 15px; margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color); box-shadow: var(--shadow-sm);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .category-btn {
+            font-size: 1rem; font-weight: 500; padding: 8px 16px; margin-bottom: 5px;
+            border: 1px solid var(--border-color); border-radius: 50px; background: white; color: var(--text-dark);
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .category-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); box-shadow: var(--shadow-md); }
+
+        .search-box {
+            border-radius: 50px; border: 1px solid var(--border-color); padding-left: 40px; height: 45px; font-size: 1rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23999' class='bi bi-search' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: 15px center;
+        }
+
+        .product-card {
+            background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;
+            display: flex; align-items: center; height: 100%; min-height: 100px;
+            box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+        }
+        .product-card.disabled { opacity: 0.7; background-color: #f8f9fa; }
+        .product-thumb {
+            width: 75px; height: 75px; flex-shrink: 0; border-radius: 6px; margin-right: 15px;
+            background-size: cover; background-position: center; background-color: #eee; border: 1px solid #dee2e6;
+        }
+        .product-info { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-right: 40px; }
+        .product-name { font-size: 1.1rem; font-weight: 600; color: #333; margin-bottom: 4px; line-height: 1.3; }
+        .product-price-tag { color: var(--danger-color); font-size: 1.2rem; font-weight: 700; margin: 0; }
         
-        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .stock-badge { font-size: 0.85rem; padding: 3px 8px; border-radius: 4px; margin-top: 5px; display: inline-block; font-weight: bold; }
+        .stock-normal { background-color: #e8f5e9; color: #198754; border: 1px solid #c3e6cb; }
+        .stock-low { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .stock-out { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .stock-disco { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+
+        .tag-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-right: 5px; font-weight: bold; color: white;}
+        .tag-new { background-color: #198754; }
+        .tag-hot { background-color: #dc3545; }
+
+        .btn-add-cart-wrapper { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; z-index: 10; }
+        .btn-add-cart {
+            width: 100%; height: 100%; border-radius: 50%; border: none;
+            background: var(--primary-color); color: white;
+            font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow-md); padding-bottom: 4px;
+        }
+        .btn-add-cart:disabled { background-color: #adb5bd; box-shadow: none; cursor: not-allowed; }
+        
+        .product-qty-badge {
+            position: absolute; top: -5px; right: -5px; background: var(--danger-color); color: white;
+            font-size: 0.8rem; font-weight: 700; width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 20;
+        }
+
+        .cart-fab {
+            position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; border-radius: 50%;
+            background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4); z-index: 1000; border: 3px solid white; cursor: pointer;
+        }
+        .cart-badge {
+            position: absolute; top: 0; right: 0; background: var(--danger-color); color: white;
+            border-radius: 50%; padding: 4px 8px; font-size: 0.85rem; font-weight: 700; border: 2px solid white;
+        }
+
+        .subcat-header { font-size: 1.1rem; font-weight: 700; color: var(--secondary-color); padding: 10px 5px; margin-top: 15px; border-bottom: 2px solid var(--border-color); }
+        
         .hidden { display: none !important; }
+        
+        /* 載入遮罩 */
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 2000; display:flex; justify-content:center; align-items:center; color:white; flex-direction:column; text-align: center;}
+        #loading-text { font-size: 1.2rem; font-weight: bold; margin-top: 15px; }
+
+        .modal-content { border-radius: 12px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        
+        /* 訂單歷史樣式 */
+        .order-card { background: #fff; border-left: 5px solid #ccc; padding: 12px; margin-bottom: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .status-badge { float: right; font-size: 0.8rem; padding: 3px 8px; border-radius: 10px; color: white; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
-    <h2 class="fw-bold mb-4">Lawson Shop</h2>
-    <div class="d-grid gap-3 w-100" style="max-width: 300px;">
+    <div class="mb-3" style="font-size: 4rem;">🏪</div>
+    <h2 class="mb-4">Lawson Shop</h2>
+    <div class="d-grid gap-3 w-100 px-4" style="max-width: 350px;">
         <button class="btn btn-success btn-lg fw-bold" onclick="loginWithLINE()">
             <i class="bi bi-line me-2"></i> LINE 帳號登入
         </button>
-        <button class="btn btn-outline-secondary btn-lg" onclick="loginAsGuest()">
+        <button class="btn btn-outline-light btn-lg" onclick="loginAsGuest()">
             <i class="bi bi-person me-2"></i> 訪客直接點餐
         </button>
     </div>
-    <div class="mt-4 text-muted small">
-        LINE 登入可記錄歷史訂單並收到通知。<br>訪客訂單僅保留於此裝置。
-    </div>
+    <div class="mt-4 text-white-50 small">LINE 登入可接收訂單通知與查詢歷史紀錄</div>
 </div>
 
 <div id="loading-overlay" class="hidden">
-    <div class="spinner-border text-primary mb-3"></div>
-    <div id="loading-text" class="fw-bold">處理中...</div>
+    <div class="spinner-border text-light mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+    <div id="loading-text">資料載入中...</div>
 </div>
 
-<div id="main-app" class="hidden">
-    <div class="header-bar d-flex justify-content-between align-items-center">
-        <span class="fw-bold fs-5">Lawson Shop</span>
-        <div class="d-flex align-items-center">
-            <img id="u-img" class="user-avatar">
-            <small id="u-name" class="fw-bold text-dark"></small>
-        </div>
-    </div>
-
-    <div class="container mt-3">
-        <div id="page-menu">
-            <div id="product-list"></div>
-        </div>
-
-        <div id="page-orders" class="hidden">
-            <h5 class="fw-bold mb-3">我的訂單記錄</h5>
-            <div class="d-flex justify-content-end mb-2">
-                <button class="btn btn-sm btn-outline-primary" onclick="fetchOrderHistory()">
-                    <i class="bi bi-arrow-clockwise"></i> 刷新狀態
+<div id="app-scroll-container">
+    <div class="header-section">
+        <div class="container d-flex justify-content-between align-items-center p-0">
+            <div class="d-flex align-items-center">
+                <img id="u-img" class="rounded-circle me-2" style="width: 32px; height: 32px; background: #eee;">
+                <div>
+                    <div class="small text-muted" style="line-height: 1;">Welcome</div>
+                    <div class="fw-bold" id="u-name" style="line-height: 1.2;">訪客</div>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="openHistoryModal()">
+                    <i class="bi bi-clock-history"></i> 查單
                 </button>
             </div>
-            <div id="order-history-list">
-                <div class="text-center text-muted mt-5">載入中...</div>
-            </div>
         </div>
     </div>
 
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchPage('menu')" id="nav-menu">
-            <i class="bi bi-shop nav-icon"></i>點餐
+    <div class="container">
+        <div class="row g-2 mb-3" id="category-btn-container"></div>
+        
+        <div class="mb-3 ps-1 pe-1">
+            <input type="text" id="front-search-input" class="form-control search-box" placeholder="🔍 搜尋商品..." oninput="handleFrontSearch()">
         </div>
-        <div class="nav-item" onclick="openCartModal()">
-            <div class="position-relative d-inline-block">
-                <i class="bi bi-cart nav-icon"></i>
-                <span id="nav-cart-badge" class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle hidden" style="width:10px;height:10px;"></span>
-            </div>
-            <div>購物車</div>
-        </div>
-        <div class="nav-item" onclick="switchPage('orders')" id="nav-orders">
-            <i class="bi bi-receipt nav-icon"></i>訂單狀態
-        </div>
+        
+        <div id="product-list" class="row g-2"></div>
+    </div>
+    
+    <div id="cart-fab" class="cart-fab" onclick="openCartModal()">
+        <i class="bi bi-cart-fill"></i>
+        <span id="cart-count" class="cart-badge hidden">0</span>
     </div>
 </div>
 
 <div class="modal fade" id="cartModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title fw-bold">購物車</h5>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">購物清單</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div id="cart-items"></div>
-                <hr>
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <span class="h5 m-0 text-muted">總計</span>
-                    <span class="h3 m-0 text-danger fw-bold" id="cart-total">$0</span>
-                </div>
+            <div class="modal-body p-0">
+                <div id="cart-items-container" class="p-3"></div>
             </div>
-            <div class="modal-footer border-0">
-                <button class="btn btn-primary w-100 fw-bold py-3 fs-5" onclick="submitOrder()">
-                    確認下單
+            <div class="modal-footer d-block bg-light">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="h5 m-0 text-secondary">總計</span>
+                    <span class="h2 m-0 fw-bold text-danger" id="cart-total-price">$0</span>
+                </div>
+                <button class="btn btn-primary w-100 fw-bold py-3 fs-5 shadow-sm" onclick="submitOrder()">
+                    確認下單 <i class="bi bi-arrow-right"></i>
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold">訂單狀態</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light" style="min-height: 200px;">
+                <div class="d-flex justify-content-end mb-2">
+                    <button class="btn btn-sm btn-link text-decoration-none" onclick="fetchOrderHistory()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                </div>
+                <div id="history-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="imgModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content bg-transparent shadow-none border-0">
+            <div class="modal-body p-0 text-center">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
+                <img id="big-image" src="" style="max-width:95%; max-height:90vh; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
     // ================= 設定區 =================
     const LIFF_ID = "2009014517-qshUmlAc"; 
-    // ★ 請填入新的部署網址 ★
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzr3WEQe8DB5aBaYtZ9mJcoaG7_OOxFQtpEaW4dJHiI_foNME7cEWIwp6f4it8cZABTPA/exec"; 
     // =========================================
 
-    let currentUser = { id: "", name: "", type: "" }; // user or guest
-    let cart = [];
-    
-    // 商品資料 (前台定死，若要動態需改為從 GAS 讀取)
+    // 商品資料 (因為移除了後台，這裡暫時寫死作為示範)
+    const defaultCategories = ["原味太太", "永圻", "森森星球"];
     const products = [
-        { id: 1, name: "招牌原味鬆餅", price: 50, img: "" },
-        { id: 2, name: "黑糖珍珠鮮奶", price: 65, img: "" },
-        { id: 3, name: "特製牛肉麵", price: 150, img: "" },
-        { id: 4, name: "炸雞排", price: 80, img: "" }
+        { cat: "原味太太", subCat: "熱銷鬆餅", name: "星星鬆餅", price: 120, stock: 10, img: "", status: "normal", tag: "hot", id: 1 }, 
+        { cat: "永圻", subCat: "湯品系列", name: "鱸魚湯", price: 90, stock: 0, img: "", status: "oos", restockDate: "預計週五", tag: "new", id: 2 },
+        { cat: "森森星球", subCat: "", name: "星球爆米花", price: 50, stock: 50, img: "", status: "normal", tag: "", id: 3 }
     ];
 
+    let currentUser = { id: "", name: "", type: "" };
+    let cart = [];
+    let categories = defaultCategories;
+
+    // --- 初始化 ---
     window.onload = async () => {
-        // 先初始化 LIFF，判斷是否已登入
+        // 渲染商品介面
+        renderFrontUI();
+        
+        // LIFF 初始化
         try {
             await liff.init({ liffId: LIFF_ID });
             if (liff.isLoggedIn()) {
-                // 如果已經登入過，直接進入
                 const profile = await liff.getProfile();
-                setCurrentUser(profile.userId, profile.displayName, "line", profile.pictureUrl);
-                showMainApp();
+                loginSuccess(profile.userId, profile.displayName, profile.pictureUrl, "line");
             } else {
-                // 沒登入，顯示選擇畫面 (Login Screen)
+                // 未登入，隱藏 Loading，顯示登入畫面
                 document.getElementById('loading-overlay').classList.add('hidden');
             }
         } catch (err) {
             console.error(err);
-            // LIFF 失敗時，強制顯示選擇畫面
             document.getElementById('loading-overlay').classList.add('hidden');
         }
-        renderProducts();
     };
 
     // --- 登入邏輯 ---
     function loginWithLINE() {
-        if (!liff.isLoggedIn()) {
-            liff.login();
-        }
+        if (!liff.isLoggedIn()) liff.login();
     }
 
     function loginAsGuest() {
-        // 產生或讀取 Guest ID
         let guestId = localStorage.getItem("pos_guest_id");
         if (!guestId) {
-            guestId = "G-" + new Date().getTime().toString().slice(-6); // 簡易 Guest ID
+            guestId = "G-" + new Date().getTime().toString().slice(-6);
             localStorage.setItem("pos_guest_id", guestId);
         }
-        setCurrentUser(guestId, "訪客 " + guestId.slice(-4), "guest", null);
-        showMainApp();
+        loginSuccess(guestId, "訪客 " + guestId.slice(-4), "", "guest");
     }
 
-    function setCurrentUser(id, name, type, pic) {
+    function loginSuccess(id, name, pic, type) {
         currentUser = { id, name, type };
         document.getElementById('u-name').innerText = name;
         document.getElementById('u-img').src = pic || "https://via.placeholder.com/32/ccc/fff?text=" + name.charAt(0);
-    }
-
-    function showMainApp() {
-        document.getElementById('login-screen').style.opacity = 0;
+        
+        // 切換畫面
+        document.getElementById('login-screen').style.opacity = '0';
         setTimeout(() => {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-        }, 300);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }, 500);
     }
 
-    // --- 頁面切換 ---
-    function switchPage(pageId) {
-        // UI 切換
-        document.getElementById('page-menu').classList.add('hidden');
-        document.getElementById('page-orders').classList.add('hidden');
-        document.getElementById('nav-menu').classList.remove('active');
-        document.getElementById('nav-orders').classList.remove('active');
+    // --- 前台渲染 (恢復專業版樣式) ---
+    function renderFrontUI() {
+        const c = document.getElementById('category-btn-container');
+        c.innerHTML = '';
+        categories.forEach((cat, index) => {
+            const d = document.createElement('div');
+            d.className = 'col-auto';
+            d.innerHTML = `<button class="btn category-btn ${index===0?'active':''}" onclick="filterCategory('${cat}', this)">${cat}</button>`;
+            c.appendChild(d);
+        });
+        
+        if(categories.length > 0) filterCategory(categories[0], null);
+    }
 
-        document.getElementById('page-' + pageId).classList.remove('hidden');
-        document.getElementById('nav-' + pageId).classList.add('active');
-
-        if (pageId === 'orders') {
-            fetchOrderHistory(); // 切換到訂單頁時自動刷新
+    function filterCategory(cat, btn) {
+        if(btn) {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
         }
-    }
-
-    // --- 商品與購物車 ---
-    function renderProducts() {
+        
         const list = document.getElementById('product-list');
-        list.innerHTML = products.map(p => `
-            <div class="product-card">
-                <div class="product-thumb" style="background-image:url('${p.img}')"></div>
-                <div class="product-info">
-                    <div class="fw-bold fs-5">${p.name}</div>
-                    <div class="price-tag">$${p.price}</div>
-                </div>
-                <button class="btn-add" onclick="addToCart(${p.id})"><i class="bi bi-plus"></i></button>
-            </div>
-        `).join('');
+        list.innerHTML = '';
+        
+        const f = products.map((p, index) => ({...p, originalIndex: index})).filter(p => p.cat === cat);
+        let lastSub = "";
+        
+        f.forEach(p => {
+            if (p.subCat !== lastSub && p.subCat) {
+                const h = document.createElement('div');
+                h.className = 'col-12';
+                h.innerHTML = `<div class="subcat-header">${p.subCat}</div>`;
+                list.appendChild(h);
+                lastSub = p.subCat;
+            }
+            list.appendChild(createProductCardHTML(p));
+        });
     }
 
-    function addToCart(id) {
-        const p = products.find(x => x.id === id);
-        const item = cart.find(x => x.id === id);
-        if(item) item.count++; else cart.push({...p, count: 1});
-        updateCartUI();
+    function createProductCardHTML(p) {
+        const qty = cart.find(x => x.name === p.name)?.count || 0;
+        let stockBadge = '';
+        let disabledClass = '';
+        let clickEvent = `onclick="event.stopPropagation();addToCart(${p.originalIndex})"`;
+
+        if (p.status === 'oos' || p.stock <= 0) {
+            stockBadge = `<span class="stock-badge stock-out">缺貨 ${p.restockDate ? '('+p.restockDate+')' : ''}</span>`;
+            disabledClass = 'disabled';
+            clickEvent = '';
+        } else {
+            stockBadge = `<span class="stock-badge stock-normal">庫存: ${p.stock}</span>`;
+        }
+
+        let tagBadge = '';
+        if(p.tag === 'hot') tagBadge = '<span class="tag-badge tag-hot">HOT</span>';
+        if(p.tag === 'new') tagBadge = '<span class="tag-badge tag-new">NEW</span>';
+
+        const div = document.createElement('div');
+        div.className = 'col-md-6';
+        div.innerHTML = `
+            <div class="product-card ${disabledClass}" onclick="showImage('${p.img}')">
+                <div class="product-thumb" style="background-image:url('${p.img || ''}')"></div>
+                <div class="product-info">
+                    <div class="product-name">${tagBadge}${p.name}</div>
+                    <div class="product-price-tag">$${p.price}</div>
+                    ${stockBadge}
+                </div>
+                <div class="btn-add-cart-wrapper">
+                    ${qty > 0 ? `<div class="product-qty-badge">${qty}</div>` : ''}
+                    <button class="btn-add-cart" ${clickEvent} ${disabledClass ? 'disabled' : ''}>
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                </div>
+            </div>`;
+        return div;
+    }
+
+    function showImage(src) {
+        if(!src) return;
+        document.getElementById('big-image').src = src;
+        new bootstrap.Modal(document.getElementById('imgModal')).show();
+    }
+
+    // --- 購物車邏輯 ---
+    function addToCart(index) {
+        const p = products[index];
+        const ex = cart.find(x => x.name === p.name);
+        if (ex) {
+            if(ex.count >= p.stock && p.stock > 0) return alert("庫存不足");
+            ex.count++;
+        } else {
+            cart.push({ ...p, count: 1 });
+        }
+        updateCartFab();
+        
+        // 重新渲染當前畫面以更新 Badge
+        const activeBtn = document.querySelector('.category-btn.active');
+        if(activeBtn) filterCategory(activeBtn.innerText, null);
+        
         if(navigator.vibrate) navigator.vibrate(30);
     }
 
-    function updateCartUI() {
-        const count = cart.reduce((a,b)=>a+b.count,0);
-        const badge = document.getElementById('nav-cart-badge');
-        if(count > 0) {
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
-        }
+    function updateCartFab() {
+        const total = cart.reduce((a, b) => a + b.count, 0);
+        const badge = document.getElementById('cart-count');
+        badge.innerText = total;
+        badge.classList.toggle('hidden', total === 0);
     }
 
     function openCartModal() {
@@ -256,54 +417,64 @@
         new bootstrap.Modal(document.getElementById('cartModal')).show();
     }
 
+    // 購物車渲染 (依您要求的樣式)
     function renderCartItems() {
-        const container = document.getElementById('cart-items');
+        const container = document.getElementById('cart-items-container');
+        container.innerHTML = '';
         let total = 0;
-        if(cart.length === 0) {
-            container.innerHTML = `<div class="text-center text-muted py-4">購物車空空的</div>`;
-            document.getElementById('cart-total').innerText = "$0";
+
+        if (cart.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted py-4">購物車是空的</div>';
+            document.getElementById('cart-total-price').innerText = '$0';
             return;
         }
-        container.innerHTML = cart.map((item, index) => {
+
+        cart.forEach((item, index) => {
             const subtotal = item.price * item.count;
             total += subtotal;
-            return `
-            <div class="d-flex align-items-center mb-3 border-bottom pb-2" style="padding: 10px 0;">
-                <div style="flex-grow: 1;">
-                    <div class="fw-bold">${item.name}</div>
-                    <small class="text-muted">$${item.price}</small>
+            
+            const div = document.createElement('div');
+            div.className = 'd-flex align-items-center mb-3 border-bottom pb-2';
+            div.innerHTML = `
+                <div style="flex-shrink: 0; width: 60px; height: 60px; margin-right: 15px; background-image: url('${item.img || ''}'); background-size: cover; background-position: center; border-radius: 8px; background-color: #eee; border: 1px solid #dee2e6;"></div>
+                <div style="flex-grow: 1; min-width: 0;">
+                    <div class="fw-bold text-truncate" style="font-size: 1.1rem; margin-bottom: 4px;">${item.name}</div>
+                    <small class="text-muted" style="display: block;">${item.cat} | $${item.price}</small>
                 </div>
-                <div class="d-flex align-items-center">
-                    <button class="btn btn-sm btn-outline-secondary rounded-circle" style="width:30px;height:30px" onclick="changeCartQty(${index}, -1)">-</button>
-                    <span class="mx-2 fw-bold">${item.count}</span>
-                    <button class="btn btn-sm btn-outline-secondary rounded-circle" style="width:30px;height:30px" onclick="changeCartQty(${index}, 1)">+</button>
+                <div class="d-flex align-items-center" style="margin-left: 10px;">
+                    <button class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="changeCartQty(${index}, -1)">-</button>
+                    <span class="mx-3 fw-bold" style="font-size: 1.1rem; min-width: 20px; text-align: center;">${item.count}</span>
+                    <button class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="changeCartQty(${index}, 1)">+</button>
                 </div>
-            </div>`;
-        }).join('');
-        document.getElementById('cart-total').innerText = "$" + total;
+            `;
+            container.appendChild(div);
+        });
+        document.getElementById('cart-total-price').innerText = '$' + total;
     }
 
     function changeCartQty(idx, delta) {
         cart[idx].count += delta;
-        if(cart[idx].count <= 0) cart.splice(idx, 1);
+        if (cart[idx].count <= 0) cart.splice(idx, 1);
         renderCartItems();
-        updateCartUI();
+        updateCartFab();
+        const activeBtn = document.querySelector('.category-btn.active');
+        if(activeBtn) filterCategory(activeBtn.innerText, null);
     }
 
     // --- 送出訂單 (API) ---
     function submitOrder() {
-        if(cart.length === 0) return alert("請先選購商品");
+        if (cart.length === 0) return alert("請先選購商品");
         
         document.getElementById('loading-text').innerText = "訂單傳送中...";
         document.getElementById('loading-overlay').classList.remove('hidden');
         bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
 
         const payload = {
-            action: "submit", // 告訴後端這是送出訂單
+            action: "submit",
             userId: currentUser.id,
             displayName: currentUser.name,
             cart: cart,
-            total: cart.reduce((a,b)=>a+(b.price*b.count), 0)
+            total: cart.reduce((a,b) => a + (b.price * b.count), 0)
         };
 
         fetch(GAS_API_URL, {
@@ -315,10 +486,12 @@
         .then(data => {
             document.getElementById('loading-overlay').classList.add('hidden');
             if(data.status === 'success') {
-                alert("✅ 下單成功！\n請至「訂單狀態」查看進度。");
+                alert("✅ 下單成功！\n我們已收到您的訂單。");
                 cart = [];
-                updateCartUI();
-                switchPage('orders'); // 自動跳轉到訂單頁
+                updateCartFab();
+                const activeBtn = document.querySelector('.category-btn.active');
+                if(activeBtn) filterCategory(activeBtn.innerText, null);
+                openHistoryModal(); // 自動打開歷史訂單確認
             } else {
                 alert("❌ 錯誤: " + data.message);
             }
@@ -329,9 +502,14 @@
         });
     }
 
-    // --- 查詢訂單歷史 (API) ---
+    // --- 訂單歷史 ---
+    function openHistoryModal() {
+        new bootstrap.Modal(document.getElementById('historyModal')).show();
+        fetchOrderHistory();
+    }
+
     function fetchOrderHistory() {
-        const container = document.getElementById('order-history-list');
+        const container = document.getElementById('history-list');
         container.innerHTML = '<div class="text-center mt-4"><div class="spinner-border text-secondary"></div></div>';
 
         const payload = {
@@ -347,46 +525,36 @@
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                renderOrderHistory(data.orders);
+                if(!data.orders || data.orders.length === 0) {
+                    container.innerHTML = '<div class="text-center text-muted mt-4">尚無訂單</div>';
+                } else {
+                    container.innerHTML = data.orders.map(o => {
+                        let badgeClass = "bg-secondary";
+                        if(o.status.includes("準備")) badgeClass = "bg-warning text-dark";
+                        if(o.status.includes("完成") || o.status.includes("取餐")) badgeClass = "bg-success";
+                        
+                        let items = o.cart.map(i => `<div class="d-flex justify-content-between"><span>${i.name} x${i.count}</span><span>$${i.price*i.count}</span></div>`).join('');
+                        
+                        return `
+                        <div class="order-card p-3 mb-3 border rounded shadow-sm bg-white" style="border-left: 5px solid ${badgeClass.includes('warning')?'#ffc107':(badgeClass.includes('success')?'#198754':'#6c757d')} !important;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <small class="text-muted">${o.time}</small>
+                                <span class="badge ${badgeClass}">${o.status}</span>
+                            </div>
+                            <div class="small text-dark mb-2 border-top border-bottom py-2">
+                                ${items}
+                            </div>
+                            <div class="text-end fw-bold">總計 $${o.total}</div>
+                        </div>`;
+                    }).join('');
+                }
             } else {
-                container.innerHTML = '<div class="text-center text-danger">讀取失敗</div>';
+                container.innerHTML = '<div class="text-danger text-center">讀取失敗</div>';
             }
         })
         .catch(err => {
-            container.innerHTML = '<div class="text-center text-danger">連線錯誤</div>';
+            container.innerHTML = '<div class="text-danger text-center">連線錯誤</div>';
         });
-    }
-
-    function renderOrderHistory(orders) {
-        const container = document.getElementById('order-history-list');
-        if(!orders || orders.length === 0) {
-            container.innerHTML = '<div class="text-center text-muted mt-5">目前沒有訂單記錄</div>';
-            return;
-        }
-
-        container.innerHTML = orders.map(order => {
-            // 處理狀態顏色
-            let statusClass = "bg-secondary";
-            if(order.status.includes("準備")) statusClass = "status-preparing";
-            if(order.status.includes("完成") || order.status.includes("取餐")) statusClass = "status-done";
-
-            // 處理內容顯示
-            let itemsHtml = order.cart.map(i => `<div>${i.name} x${i.count}</div>`).join('');
-
-            return `
-            <div class="order-history-card" style="border-left-color: ${statusClass === 'status-preparing' ? '#ffc107' : (statusClass === 'status-done' ? '#198754' : '#6c757d')}">
-                <div class="d-flex justify-content-between mb-2">
-                    <small class="text-muted">${order.time}</small>
-                    <span class="status-badge ${statusClass}">${order.status}</span>
-                </div>
-                <div class="mb-2 text-dark small">
-                    ${itemsHtml}
-                </div>
-                <div class="text-end fw-bold">
-                    總計 $${order.total}
-                </div>
-            </div>`;
-        }).join('');
     }
 </script>
 </body>
