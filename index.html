@@ -261,8 +261,8 @@
 <script>
     // ================= 設定區 =================
     const LIFF_ID = "2009014517-qshUmlAc"; 
-    // GAS 網址 (guX 結尾)
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz4CZDlHRT0He0LtaJJFLrS2ASZyEqsDeALFJNvo8VPZ1Qm3_MSbFPEDu1RNtda3guX/exec"; 
+    // ★ 已經更新為您提供的最新部署網址 (TPA結尾) ★
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzr3WEQe8DB5aBaYtZ9mJcoaG7_OOxFQtpEaW4dJHiI_foNME7cEWIwp6f4it8cZABTPA/exec"; 
     // =========================================
 
     let products = [];
@@ -315,7 +315,7 @@
         await fetchProducts();
     }
 
-    // --- 下載商品資料 (強化錯誤處理) ---
+    // --- 🕵️‍♂️ 偵探版 fetchProducts (會把後端回應顯示出來) ---
     async function fetchProducts() {
         document.getElementById('loading-overlay').classList.remove('hidden');
         document.getElementById('loading-text').innerText = "下載最新菜單...";
@@ -328,25 +328,28 @@
             });
             
             const text = await res.text();
+            
             let data;
             try {
                 data = JSON.parse(text);
             } catch(e) {
-                console.error("JSON Parse Error", text);
-                throw new Error("資料格式錯誤，請聯絡管理員");
+                // 如果後端回傳的不是 JSON (例如錯誤頁面)，這裡會跳出警告
+                alert("❌ 連線異常！後台回傳內容不是 JSON。\n內容預覽：\n" + text.substring(0, 300));
+                document.getElementById('loading-overlay').classList.add('hidden');
+                return;
             }
 
             if (data.status === 'success') {
-                // 檢查 products 是否為陣列
                 if (data.products && Array.isArray(data.products)) {
+                    // 成功讀取
                     products = data.products.map((p, index) => ({ ...p, originalIndex: index }));
-                    
                     // 取得分類 (排除空分類)
                     categories = [...new Set(products.map(p => p.cat))].filter(c => c);
                     
                     renderFrontUI();
                 } else {
-                    alert("商品資料結構異常");
+                    // 如果後端回傳 success 但沒有 products，代表 GAS 程式碼還是舊的
+                    alert("⚠️ 偵測到版本異常！\n您的 GAS 後端程式碼似乎沒有更新 (找不到 products 欄位)。\n請務必去 GAS 按「部署」->「建立新版本」。");
                 }
                 document.getElementById('loading-overlay').classList.add('hidden');
             } else {
