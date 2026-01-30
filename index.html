@@ -284,6 +284,7 @@
             }
         } catch (err) {
             console.error("LIFF Init Error", err);
+            // 就算 LIFF 失敗，也允許顯示登入畫面(讓訪客可以用)
             document.getElementById('start-screen').style.opacity = '1';
         }
     };
@@ -314,7 +315,7 @@
         await fetchProducts();
     }
 
-    // --- 🕵️‍♂️ 偵探版 fetchProducts (會把後端回應顯示出來) ---
+    // --- 下載商品資料 (強化錯誤處理) ---
     async function fetchProducts() {
         document.getElementById('loading-overlay').classList.remove('hidden');
         document.getElementById('loading-text').innerText = "下載最新菜單...";
@@ -327,29 +328,25 @@
             });
             
             const text = await res.text();
-            
             let data;
             try {
                 data = JSON.parse(text);
             } catch(e) {
-                // 如果後端回傳的不是 JSON (例如錯誤頁面)，這裡會跳出警告
-                alert("❌ 連線異常！後台回傳內容不是 JSON。\n內容預覽：\n" + text.substring(0, 300));
-                document.getElementById('loading-overlay').classList.add('hidden');
-                return;
+                console.error("JSON Parse Error", text);
+                throw new Error("資料格式錯誤，請聯絡管理員");
             }
 
             if (data.status === 'success') {
+                // 檢查 products 是否為陣列
                 if (data.products && Array.isArray(data.products)) {
-                    // alert("✅ 成功連線！讀取到 " + data.products.length + " 筆商品"); // 測試成功後可註解
-                    
                     products = data.products.map((p, index) => ({ ...p, originalIndex: index }));
+                    
                     // 取得分類 (排除空分類)
                     categories = [...new Set(products.map(p => p.cat))].filter(c => c);
                     
                     renderFrontUI();
                 } else {
-                    // 如果後端回傳 success 但沒有 products，代表 GAS 程式碼還是舊的
-                    alert("⚠️ 偵測到版本異常！\n您的 GAS 後端程式碼似乎沒有更新 (找不到 products 欄位)。\n請務必去 GAS 按「部署」->「建立新版本」。");
+                    alert("商品資料結構異常");
                 }
                 document.getElementById('loading-overlay').classList.add('hidden');
             } else {
@@ -622,7 +619,7 @@
                 updateCartFab();
                 const activeBtn = document.querySelector('.category-btn.active');
                 if(activeBtn) filterCategory(activeBtn.innerText, null);
-                openHistoryModal();
+                openHistoryModal(); // 自動打開歷史訂單確認
             } else {
                 alert("❌ 錯誤: " + data.message);
             }
