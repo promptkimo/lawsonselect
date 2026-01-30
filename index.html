@@ -3,12 +3,8 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#f8f9fa">
-
     <title>Lawson Shop 點餐系統</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -23,7 +19,6 @@
             --light-bg: #f8f9fa; --card-bg: #ffffff; --border-color: #dee2e6; --text-dark: #212529;
             --shadow-sm: 0 1px 2px rgba(0,0,0,0.05); --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
         }
-
         html { height: 100%; overflow: hidden; overscroll-behavior: none; }
         body { 
             background-color: var(--light-bg); color: var(--text-dark);
@@ -32,89 +27,45 @@
             padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
             overflow: hidden; -webkit-user-select: none; user-select: none; position: fixed;
         }
-
-        #app-scroll-container {
-            width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden;
-            padding-bottom: 120px; -webkit-overflow-scrolling: touch;
-        }
-
-        /* 登入畫面樣式 */
-        #login-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #212529; z-index: 99999; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; color: white; transition: opacity 0.5s;
-        }
-
-        .header-section {
-            background: white; padding: 15px; margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color); box-shadow: var(--shadow-sm);
-            position: sticky; top: 0; z-index: 100;
-        }
-
-        .category-btn {
-            font-size: 1rem; font-weight: 500; padding: 8px 16px; margin-bottom: 5px;
-            border: 1px solid var(--border-color); border-radius: 50px; background: white; color: var(--text-dark);
-            transition: all 0.2s; white-space: nowrap;
-        }
+        #app-scroll-container { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; padding-bottom: 120px; -webkit-overflow-scrolling: touch; }
+        
+        /* 登入畫面 */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #212529; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; transition: opacity 0.5s; }
+        
+        /* 頂部導航 */
+        .header-section { background: white; padding: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
+        
+        /* 分類按鈕 */
+        .category-btn { font-size: 1rem; font-weight: 500; padding: 8px 16px; margin-bottom: 5px; border: 1px solid var(--border-color); border-radius: 50px; background: white; color: var(--text-dark); transition: all 0.2s; white-space: nowrap; }
         .category-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); box-shadow: var(--shadow-md); }
-
-        .search-box {
-            border-radius: 50px; border: 1px solid var(--border-color); padding-left: 40px; height: 45px; font-size: 1rem;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23999' class='bi bi-search' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: 15px center;
-        }
-
-        .product-card {
-            background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;
-            display: flex; align-items: center; height: 100%; min-height: 100px;
-            box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
-        }
+        
+        /* 商品卡片 */
+        .product-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; align-items: center; height: 100%; min-height: 100px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
         .product-card.disabled { opacity: 0.7; background-color: #f8f9fa; }
-        .product-thumb {
-            width: 75px; height: 75px; flex-shrink: 0; border-radius: 6px; margin-right: 15px;
-            background-size: cover; background-position: center; background-color: #eee; border: 1px solid #dee2e6;
-        }
+        .product-thumb { width: 75px; height: 75px; flex-shrink: 0; border-radius: 6px; margin-right: 15px; background-size: cover; background-position: center; background-color: #eee; border: 1px solid #dee2e6; }
         .product-info { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-right: 40px; }
         .product-name { font-size: 1.1rem; font-weight: 600; color: #333; margin-bottom: 4px; line-height: 1.3; }
         .product-price-tag { color: var(--danger-color); font-size: 1.2rem; font-weight: 700; margin: 0; }
         
+        /* 標籤與庫存 */
         .stock-badge { font-size: 0.85rem; padding: 3px 8px; border-radius: 4px; margin-top: 5px; display: inline-block; font-weight: bold; }
         .stock-normal { background-color: #e8f5e9; color: #198754; border: 1px solid #c3e6cb; }
-        .stock-low { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
         .stock-out { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .stock-disco { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
-
         .tag-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-right: 5px; font-weight: bold; color: white;}
         .tag-new { background-color: #198754; }
         .tag-hot { background-color: #dc3545; }
 
+        /* 購物車按鈕 */
         .btn-add-cart-wrapper { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; z-index: 10; }
-        .btn-add-cart {
-            width: 100%; height: 100%; border-radius: 50%; border: none;
-            background: var(--primary-color); color: white;
-            font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
-            box-shadow: var(--shadow-md); padding-bottom: 4px;
-        }
+        .btn-add-cart { width: 100%; height: 100%; border-radius: 50%; border: none; background: var(--primary-color); color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); padding-bottom: 4px; }
         .btn-add-cart:disabled { background-color: #adb5bd; box-shadow: none; cursor: not-allowed; }
-        
-        .product-qty-badge {
-            position: absolute; top: -5px; right: -5px; background: var(--danger-color); color: white;
-            font-size: 0.8rem; font-weight: 700; width: 22px; height: 22px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 20;
-        }
+        .product-qty-badge { position: absolute; top: -5px; right: -5px; background: var(--danger-color); color: white; font-size: 0.8rem; font-weight: 700; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 20; }
 
-        .cart-fab {
-            position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; border-radius: 50%;
-            background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4); z-index: 1000; border: 3px solid white; cursor: pointer;
-        }
-        .cart-badge {
-            position: absolute; top: 0; right: 0; background: var(--danger-color); color: white;
-            border-radius: 50%; padding: 4px 8px; font-size: 0.85rem; font-weight: 700; border: 2px solid white;
-        }
+        .cart-fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4); z-index: 1000; border: 3px solid white; cursor: pointer; }
+        .cart-badge { position: absolute; top: 0; right: 0; background: var(--danger-color); color: white; border-radius: 50%; padding: 4px 8px; font-size: 0.85rem; font-weight: 700; border: 2px solid white; }
 
+        /* 雜項 */
         .subcat-header { font-size: 1.1rem; font-weight: 700; color: var(--secondary-color); padding: 10px 5px; margin-top: 15px; border-bottom: 2px solid var(--border-color); }
-        
         .hidden { display: none !important; }
         
         /* 載入遮罩 */
@@ -122,8 +73,6 @@
         #loading-text { font-size: 1.2rem; font-weight: bold; margin-top: 15px; }
 
         .modal-content { border-radius: 12px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        
-        /* 訂單歷史樣式 */
         .order-card { background: #fff; border-left: 5px solid #ccc; padding: 12px; margin-bottom: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .status-badge { float: right; font-size: 0.8rem; padding: 3px 8px; border-radius: 10px; color: white; }
     </style>
@@ -146,7 +95,8 @@
 
 <div id="loading-overlay" class="hidden">
     <div class="spinner-border text-light mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
-    <div id="loading-text">資料載入中...</div>
+    <div id="loading-text">連線中...</div>
+    <div class="small text-white-50 mt-2">正在下載最新商品資訊</div>
 </div>
 
 <div id="app-scroll-container">
@@ -171,7 +121,7 @@
         <div class="row g-2 mb-3" id="category-btn-container"></div>
         
         <div class="mb-3 ps-1 pe-1">
-            <input type="text" id="front-search-input" class="form-control search-box" placeholder="🔍 搜尋商品..." oninput="handleFrontSearch()">
+            <input type="text" id="front-search-input" class="form-control rounded-pill border" style="padding-left:15px; height:45px;" placeholder="🔍 搜尋商品..." oninput="handleFrontSearch()">
         </div>
         
         <div id="product-list" class="row g-2"></div>
@@ -244,36 +194,33 @@
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzr3WEQe8DB5aBaYtZ9mJcoaG7_OOxFQtpEaW4dJHiI_foNME7cEWIwp6f4it8cZABTPA/exec"; 
     // =========================================
 
-    // 商品資料 (因為移除了後台，這裡暫時寫死作為示範)
-    const defaultCategories = ["原味太太", "永圻", "森森星球"];
-    const products = [
-        { cat: "原味太太", subCat: "熱銷鬆餅", name: "星星鬆餅", price: 120, stock: 10, img: "", status: "normal", tag: "hot", id: 1 }, 
-        { cat: "永圻", subCat: "湯品系列", name: "鱸魚湯", price: 90, stock: 0, img: "", status: "oos", restockDate: "預計週五", tag: "new", id: 2 },
-        { cat: "森森星球", subCat: "", name: "星球爆米花", price: 50, stock: 50, img: "", status: "normal", tag: "", id: 3 }
-    ];
-
+    let products = [];
+    let categories = [];
     let currentUser = { id: "", name: "", type: "" };
     let cart = [];
-    let categories = defaultCategories;
 
     // --- 初始化 ---
     window.onload = async () => {
-        // 渲染商品介面
-        renderFrontUI();
-        
-        // LIFF 初始化
+        // 先顯示 Loading
+        document.getElementById('loading-overlay').classList.remove('hidden');
+
         try {
+            // 1. 初始化 LIFF
             await liff.init({ liffId: LIFF_ID });
+            
+            // 2. 判斷是否登入
             if (liff.isLoggedIn()) {
                 const profile = await liff.getProfile();
-                loginSuccess(profile.userId, profile.displayName, profile.pictureUrl, "line");
+                await loginSuccess(profile.userId, profile.displayName, profile.pictureUrl, "line");
             } else {
                 // 未登入，隱藏 Loading，顯示登入畫面
                 document.getElementById('loading-overlay').classList.add('hidden');
+                document.getElementById('login-screen').style.display = 'flex';
             }
         } catch (err) {
             console.error(err);
             document.getElementById('loading-overlay').classList.add('hidden');
+            alert("初始化失敗，請檢查設定");
         }
     };
 
@@ -291,23 +238,60 @@
         loginSuccess(guestId, "訪客 " + guestId.slice(-4), "", "guest");
     }
 
-    function loginSuccess(id, name, pic, type) {
+    async function loginSuccess(id, name, pic, type) {
         currentUser = { id, name, type };
         document.getElementById('u-name').innerText = name;
         document.getElementById('u-img').src = pic || "https://via.placeholder.com/32/ccc/fff?text=" + name.charAt(0);
         
-        // 切換畫面
+        // 隱藏登入畫面
         document.getElementById('login-screen').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('loading-overlay').classList.add('hidden');
-        }, 500);
+        setTimeout(() => { document.getElementById('login-screen').style.display = 'none'; }, 500);
+
+        // ★ 關鍵：登入後立刻去 GAS 下載最新商品資料
+        await fetchProducts();
     }
 
-    // --- 前台渲染 (恢復專業版樣式) ---
+    // --- 下載商品資料 (GAS) ---
+    async function fetchProducts() {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+        document.getElementById('loading-text').innerText = "下載最新菜單...";
+
+        try {
+            // 使用 no-cors 時無法讀取 fetch 的回傳值，所以這裡改用 text/plain
+            const res = await fetch(GAS_API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "getProducts" }),
+                headers: { "Content-Type": "text/plain;charset=utf-8" }
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                products = data.products.map((p, index) => ({ ...p, originalIndex: index }));
+                
+                // 動態生成分類
+                categories = [...new Set(products.map(p => p.cat))];
+                
+                renderFrontUI();
+                document.getElementById('loading-overlay').classList.add('hidden');
+            } else {
+                alert("菜單讀取錯誤: " + data.message);
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        } catch (e) {
+            alert("連線失敗，請檢查網路");
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+    }
+
+    // --- 前台渲染 ---
     function renderFrontUI() {
         const c = document.getElementById('category-btn-container');
         c.innerHTML = '';
+        if(categories.length === 0) {
+            c.innerHTML = '<div class="text-white">無商品分類</div>';
+            return;
+        }
+
         categories.forEach((cat, index) => {
             const d = document.createElement('div');
             d.className = 'col-auto';
@@ -315,7 +299,8 @@
             c.appendChild(d);
         });
         
-        if(categories.length > 0) filterCategory(categories[0], null);
+        // 預設顯示第一個分類
+        filterCategory(categories[0], null);
     }
 
     function filterCategory(cat, btn) {
@@ -327,9 +312,14 @@
         const list = document.getElementById('product-list');
         list.innerHTML = '';
         
-        const f = products.map((p, index) => ({...p, originalIndex: index})).filter(p => p.cat === cat);
+        const f = products.filter(p => p.cat === cat);
         let lastSub = "";
         
+        if(f.length === 0) {
+            list.innerHTML = '<div class="text-center text-muted col-12 py-5">此分類暫無商品</div>';
+            return;
+        }
+
         f.forEach(p => {
             if (p.subCat !== lastSub && p.subCat) {
                 const h = document.createElement('div');
@@ -341,6 +331,29 @@
             list.appendChild(createProductCardHTML(p));
         });
     }
+    
+    // 搜尋功能
+    function handleFrontSearch() {
+        const k = document.getElementById('front-search-input').value.toLowerCase();
+        const list = document.getElementById('product-list');
+        
+        if(!k) {
+            // 清空搜尋時，回到第一個分類
+            const firstBtn = document.querySelector('.category-btn');
+            if(firstBtn) firstBtn.click();
+            return;
+        }
+        
+        list.innerHTML = '';
+        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        
+        const f = products.filter(p => p.name.toLowerCase().includes(k));
+        if(f.length === 0) {
+            list.innerHTML = '<div class="text-center text-muted col-12 py-5">找不到商品</div>';
+            return;
+        }
+        f.forEach(p => list.appendChild(createProductCardHTML(p)));
+    }
 
     function createProductCardHTML(p) {
         const qty = cart.find(x => x.name === p.name)?.count || 0;
@@ -348,8 +361,8 @@
         let disabledClass = '';
         let clickEvent = `onclick="event.stopPropagation();addToCart(${p.originalIndex})"`;
 
-        if (p.status === 'oos' || p.stock <= 0) {
-            stockBadge = `<span class="stock-badge stock-out">缺貨 ${p.restockDate ? '('+p.restockDate+')' : ''}</span>`;
+        if (p.status === 'oos' || (p.stock !== "" && p.stock <= 0)) {
+            stockBadge = `<span class="stock-badge stock-out">缺貨</span>`;
             disabledClass = 'disabled';
             clickEvent = '';
         } else {
@@ -391,7 +404,8 @@
         const p = products[index];
         const ex = cart.find(x => x.name === p.name);
         if (ex) {
-            if(ex.count >= p.stock && p.stock > 0) return alert("庫存不足");
+            // 庫存檢查 (如果有設定庫存)
+            if(p.stock !== "" && ex.count >= p.stock) return alert("庫存不足");
             ex.count++;
         } else {
             cart.push({ ...p, count: 1 });
@@ -399,8 +413,12 @@
         updateCartFab();
         
         // 重新渲染當前畫面以更新 Badge
-        const activeBtn = document.querySelector('.category-btn.active');
-        if(activeBtn) filterCategory(activeBtn.innerText, null);
+        const k = document.getElementById('front-search-input').value;
+        if(k) handleFrontSearch();
+        else {
+            const activeBtn = document.querySelector('.category-btn.active');
+            if(activeBtn) filterCategory(activeBtn.innerText, null);
+        }
         
         if(navigator.vibrate) navigator.vibrate(30);
     }
@@ -417,7 +435,6 @@
         new bootstrap.Modal(document.getElementById('cartModal')).show();
     }
 
-    // 購物車渲染 (依您要求的樣式)
     function renderCartItems() {
         const container = document.getElementById('cart-items-container');
         container.innerHTML = '';
@@ -457,6 +474,7 @@
         if (cart[idx].count <= 0) cart.splice(idx, 1);
         renderCartItems();
         updateCartFab();
+        // 更新背景的商品列表 Badge
         const activeBtn = document.querySelector('.category-btn.active');
         if(activeBtn) filterCategory(activeBtn.innerText, null);
     }
